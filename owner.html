@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Owner Builder</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="config.js"></script>
+</head>
+<body>
+  <div class="bg-fx"></div>
+  <main class="container">
+    <header class="hero">
+      <h1>Owner Builder</h1>
+      <p>Set semua button di sini. User page ada di <code>/</code>.</p>
+    </header>
+
+    <section class="card">
+      <h2 class="section-title">Main Setup</h2>
+      <div class="grid">
+        <div><label>Title</label><input id="titleInput" /></div>
+        <div><label>Subtitle</label><textarea id="subtitleInput"></textarea></div>
+        <div><label>Primary Label</label><input id="primaryLabelInput" /></div>
+        <div><label>Primary URL</label><input id="primaryUrlInput" placeholder="https://..." /></div>
+        <div><label>Secondary Label</label><input id="secondaryLabelInput" /></div>
+        <div><label>Secondary URL</label><input id="secondaryUrlInput" placeholder="https://..." /></div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <h3 class="section-title" style="font-size:16px;">Extra Buttons</h3>
+        <div id="extraList" class="grid"></div>
+        <div class="actions"><button id="addExtra" class="btn btn-secondary" type="button">+ Add Button</button></div>
+      </div>
+
+      <div class="actions">
+        <button id="openUser" class="btn btn-primary" type="button">Open User Page</button>
+        <button id="copyUser" class="btn btn-secondary" type="button">Copy User URL</button>
+      </div>
+      <div id="error" class="error"></div>
+      <div id="success" class="success"></div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">Live Preview</h2>
+      <div class="actions">
+        <a id="pv1" class="btn btn-primary" href="#" target="_blank" rel="noopener noreferrer">Primary</a>
+        <a id="pv2" class="btn btn-secondary" href="#" target="_blank" rel="noopener noreferrer">Secondary</a>
+        <div id="pvExtra" class="actions" style="margin-top:0"></div>
+      </div>
+      <p class="note">Tip: selepas puas hati, copy URL dan share terus.</p>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var defaults = Object.assign({
+        title: "Reezo Official Links",
+        subtitle: "Pilih mana-mana link rasmi di bawah.",
+        primaryLabel: "Open Bot",
+        primaryUrl: "https://t.me/MMHREEZO_BOT",
+        secondaryLabel: "Open WhatsApp Channel",
+        secondaryUrl: "https://whatsapp.com/channel/YOUR_CHANNEL_ID",
+        extraButtons: []
+      }, window.LANDING_DEFAULTS || {});
+
+      var el = {
+        title: document.getElementById("titleInput"),
+        subtitle: document.getElementById("subtitleInput"),
+        pLabel: document.getElementById("primaryLabelInput"),
+        pUrl: document.getElementById("primaryUrlInput"),
+        sLabel: document.getElementById("secondaryLabelInput"),
+        sUrl: document.getElementById("secondaryUrlInput"),
+        extraList: document.getElementById("extraList"),
+        addExtra: document.getElementById("addExtra"),
+        openUser: document.getElementById("openUser"),
+        copyUser: document.getElementById("copyUser"),
+        err: document.getElementById("error"),
+        ok: document.getElementById("success"),
+        pv1: document.getElementById("pv1"),
+        pv2: document.getElementById("pv2"),
+        pvExtra: document.getElementById("pvExtra")
+      };
+
+      function val(x) { return String((x && x.value) || "").trim(); }
+      function validUrl(u) { return /^https?:\/\//i.test(u); }
+
+      function collectExtras() {
+        return Array.from(el.extraList.querySelectorAll(".x-row")).map(function (row) {
+          return {
+            label: val(row.querySelector(".x-label")),
+            url: val(row.querySelector(".x-url"))
+          };
+        }).filter(function (x) { return x.label || x.url; });
+      }
+
+      function renderExtras(list) {
+        el.extraList.innerHTML = "";
+        list.forEach(function (item, i) {
+          var row = document.createElement("div");
+          row.className = "x-row row-box";
+          row.innerHTML =
+            '<div class="grid">' +
+              '<div><label>Label #' + (i + 1) + '</label><input class="x-label" value="' + (item.label || "").replace(/"/g, "&quot;") + '" /></div>' +
+              '<div><label>URL #' + (i + 1) + '</label><input class="x-url" value="' + (item.url || "").replace(/"/g, "&quot;") + '" placeholder="https://..." /></div>' +
+              '<button type="button" class="btn btn-secondary x-remove">Remove</button>' +
+            '</div>';
+          el.extraList.appendChild(row);
+        });
+
+        Array.from(el.extraList.querySelectorAll(".x-remove")).forEach(function (b) {
+          b.addEventListener("click", function () { b.closest(".x-row").remove(); onChange(); });
+        });
+        Array.from(el.extraList.querySelectorAll(".x-label,.x-url")).forEach(function (i) {
+          i.addEventListener("input", onChange);
+        });
+      }
+
+      function buildUrl() {
+        var p = new URLSearchParams();
+        if (val(el.title)) p.set("title", val(el.title));
+        if (val(el.subtitle)) p.set("subtitle", val(el.subtitle));
+        if (val(el.pLabel)) p.set("primary_label", val(el.pLabel));
+        if (val(el.pUrl)) p.set("primary_url", val(el.pUrl));
+        if (val(el.sLabel)) p.set("secondary_label", val(el.sLabel));
+        if (val(el.sUrl)) p.set("secondary_url", val(el.sUrl));
+        var extras = collectExtras();
+        if (extras.length) p.set("extra_buttons", JSON.stringify(extras));
+        return "index.html?" + p.toString();
+      }
+
+      function validate() {
+        el.err.textContent = "";
+        el.ok.textContent = "";
+        if (!validUrl(val(el.pUrl))) { el.err.textContent = "Primary URL kena bermula https://"; return false; }
+        if (!validUrl(val(el.sUrl))) { el.err.textContent = "Secondary URL kena bermula https://"; return false; }
+        var extras = collectExtras();
+        for (var i = 0; i < extras.length; i += 1) {
+          if (!extras[i].label || !extras[i].url) { el.err.textContent = "Extra #" + (i + 1) + " perlukan label + URL"; return false; }
+          if (!validUrl(extras[i].url)) { el.err.textContent = "Extra URL #" + (i + 1) + " kena https://"; return false; }
+        }
+        return true;
+      }
+
+      function preview() {
+        el.pv1.textContent = val(el.pLabel) || "Primary";
+        el.pv1.href = validUrl(val(el.pUrl)) ? val(el.pUrl) : "#";
+        el.pv2.textContent = val(el.sLabel) || "Secondary";
+        el.pv2.href = validUrl(val(el.sUrl)) ? val(el.sUrl) : "#";
+        el.pvExtra.innerHTML = "";
+        collectExtras().forEach(function (x) {
+          var a = document.createElement("a");
+          a.className = "btn btn-secondary";
+          a.textContent = x.label || "Open";
+          a.href = validUrl(x.url) ? x.url : "#";
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          el.pvExtra.appendChild(a);
+        });
+      }
+
+      function saveDraft() {
+        localStorage.setItem("reezoLandingDraft", JSON.stringify({
+          title: val(el.title), subtitle: val(el.subtitle),
+          primaryLabel: val(el.pLabel), primaryUrl: val(el.pUrl),
+          secondaryLabel: val(el.sLabel), secondaryUrl: val(el.sUrl),
+          extraButtons: collectExtras()
+        }));
+      }
+
+      function loadDraft() {
+        try {
+          var d = JSON.parse(localStorage.getItem("reezoLandingDraft") || "{}");
+          if (d.title) el.title.value = d.title;
+          if (d.subtitle) el.subtitle.value = d.subtitle;
+          if (d.primaryLabel) el.pLabel.value = d.primaryLabel;
+          if (d.primaryUrl) el.pUrl.value = d.primaryUrl;
+          if (d.secondaryLabel) el.sLabel.value = d.secondaryLabel;
+          if (d.secondaryUrl) el.sUrl.value = d.secondaryUrl;
+          if (Array.isArray(d.extraButtons)) renderExtras(d.extraButtons);
+        } catch (_) {}
+      }
+
+      function onChange() { preview(); saveDraft(); }
+
+      el.title.value = defaults.title;
+      el.subtitle.value = defaults.subtitle;
+      el.pLabel.value = defaults.primaryLabel;
+      el.pUrl.value = defaults.primaryUrl;
+      el.sLabel.value = defaults.secondaryLabel;
+      el.sUrl.value = defaults.secondaryUrl;
+      renderExtras(Array.isArray(defaults.extraButtons) ? defaults.extraButtons : []);
+      loadDraft();
+      preview();
+
+      [el.title, el.subtitle, el.pLabel, el.pUrl, el.sLabel, el.sUrl].forEach(function (n) { n.addEventListener("input", onChange); });
+
+      el.addExtra.addEventListener("click", function () {
+        var x = collectExtras();
+        x.push({ label: "", url: "" });
+        renderExtras(x);
+        onChange();
+      });
+
+      el.openUser.addEventListener("click", function () {
+        if (!validate()) return;
+        window.open(buildUrl(), "_blank", "noopener");
+      });
+
+      el.copyUser.addEventListener("click", async function () {
+        if (!validate()) return;
+        var full = new URL(buildUrl(), window.location.href).toString();
+        try {
+          await navigator.clipboard.writeText(full);
+          el.ok.textContent = "User URL copied.";
+        } catch (_) {
+          el.ok.textContent = "Copy manual: " + full;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

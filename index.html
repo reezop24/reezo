@@ -1,5 +1,106 @@
 <!doctype html>
+<<<<<<< HEAD
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Landing</title></head>
 <body><h1>Hello</h1></body>
+=======
+<html lang="ms">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reezo Links</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="config.js"></script>
+</head>
+<body>
+  <div class="bg-fx"></div>
+  <main class="container">
+    <header class="hero">
+      <h1 id="title">Reezo Official Links</h1>
+      <p id="subtitle">Pilih mana-mana link rasmi di bawah.</p>
+    </header>
+
+    <section class="card">
+      <h2 class="section-title">Quick Access</h2>
+      <div class="actions">
+        <a id="primaryBtn" class="btn btn-primary" href="#" target="_blank" rel="noopener noreferrer">Open Bot</a>
+        <a id="secondaryBtn" class="btn btn-secondary" href="#" target="_blank" rel="noopener noreferrer">Open WhatsApp Channel</a>
+        <div id="extraBtns" class="actions" style="margin-top:0"></div>
+      </div>
+      <div id="error" class="error"></div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var fallback = {
+        title: "Reezo Official Links",
+        subtitle: "Pilih mana-mana link rasmi di bawah.",
+        primaryLabel: "Open Bot",
+        primaryUrl: "https://t.me/MMHREEZO_BOT",
+        secondaryLabel: "Open WhatsApp Channel",
+        secondaryUrl: "https://whatsapp.com/channel/YOUR_CHANNEL_ID",
+        extraButtons: []
+      };
+      var defaults = Object.assign({}, fallback, window.LANDING_DEFAULTS || {});
+
+      function q(name) {
+        try {
+          return new URLSearchParams(window.location.search).get(name) || "";
+        } catch (_) {
+          return "";
+        }
+      }
+
+      function validUrl(u) { return /^https?:\/\//i.test(u); }
+
+      function readExtra() {
+        var raw = q("extra_buttons");
+        if (!raw) return Array.isArray(defaults.extraButtons) ? defaults.extraButtons : [];
+        try {
+          var parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (_) {
+          return [];
+        }
+      }
+
+      var title = q("title") || defaults.title;
+      var subtitle = q("subtitle") || defaults.subtitle;
+      var pLabel = q("primary_label") || defaults.primaryLabel;
+      var pUrl = q("primary_url") || defaults.primaryUrl;
+      var sLabel = q("secondary_label") || defaults.secondaryLabel;
+      var sUrl = q("secondary_url") || defaults.secondaryUrl;
+
+      document.getElementById("title").textContent = title;
+      document.getElementById("subtitle").textContent = subtitle;
+
+      var pBtn = document.getElementById("primaryBtn");
+      var sBtn = document.getElementById("secondaryBtn");
+      pBtn.textContent = pLabel;
+      pBtn.href = validUrl(pUrl) ? pUrl : "#";
+      sBtn.textContent = sLabel;
+      sBtn.href = validUrl(sUrl) ? sUrl : "#";
+
+      var extra = document.getElementById("extraBtns");
+      readExtra().forEach(function (item) {
+        var label = String((item && item.label) || "").trim();
+        var url = String((item && item.url) || "").trim();
+        if (!label || !validUrl(url)) return;
+        var a = document.createElement("a");
+        a.className = "btn btn-secondary";
+        a.textContent = label;
+        a.href = url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        extra.appendChild(a);
+      });
+
+      if (/YOUR_CHANNEL_ID/i.test(sUrl)) {
+        document.getElementById("error").textContent = "Sila update secondaryUrl dalam config.js";
+      }
+    })();
+  </script>
+</body>
+>>>>>>> 4391817 (Initial reezo landing project)
 </html>
