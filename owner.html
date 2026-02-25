@@ -11,6 +11,9 @@
   <div class="bg-fx"></div>
   <main class="container">
     <header class="hero">
+      <div class="logo-wrap">
+        <img src="logo.png" alt="Reezo Logo" class="site-logo" />
+      </div>
       <h1>Owner Builder</h1>
       <p>Set semua button di sini. User page ada di <code>/</code>.</p>
     </header>
@@ -22,8 +25,10 @@
         <div><label>Subtitle</label><textarea id="subtitleInput"></textarea></div>
         <div><label>Primary Label</label><input id="primaryLabelInput" /></div>
         <div><label>Primary URL</label><input id="primaryUrlInput" placeholder="https://..." /></div>
+        <div><label>Primary Icon URL (optional)</label><input id="primaryIconInput" placeholder="https://.../icon.png" /></div>
         <div><label>Secondary Label</label><input id="secondaryLabelInput" /></div>
         <div><label>Secondary URL</label><input id="secondaryUrlInput" placeholder="https://..." /></div>
+        <div><label>Secondary Icon URL (optional)</label><input id="secondaryIconInput" placeholder="https://.../icon.png" /></div>
       </div>
 
       <div class="card" style="margin-top:12px;">
@@ -58,8 +63,10 @@
         subtitle: "Pilih mana-mana link rasmi di bawah.",
         primaryLabel: "Open Bot",
         primaryUrl: "https://t.me/MMHREEZO_BOT",
+        primaryIcon: "telegram.png",
         secondaryLabel: "Open WhatsApp Channel",
         secondaryUrl: "https://whatsapp.com/channel/YOUR_CHANNEL_ID",
+        secondaryIcon: "whatsapp.png",
         extraButtons: []
       }, window.LANDING_DEFAULTS || {});
 
@@ -68,8 +75,10 @@
         subtitle: document.getElementById("subtitleInput"),
         pLabel: document.getElementById("primaryLabelInput"),
         pUrl: document.getElementById("primaryUrlInput"),
+        pIcon: document.getElementById("primaryIconInput"),
         sLabel: document.getElementById("secondaryLabelInput"),
         sUrl: document.getElementById("secondaryUrlInput"),
+        sIcon: document.getElementById("secondaryIconInput"),
         extraList: document.getElementById("extraList"),
         addExtra: document.getElementById("addExtra"),
         openUser: document.getElementById("openUser"),
@@ -83,12 +92,34 @@
 
       function val(x) { return String((x && x.value) || "").trim(); }
       function validUrl(u) { return /^https?:\/\//i.test(u); }
+      function validIcon(u) {
+        if (!u) return true;
+        return /^https?:\/\//i.test(u) || /^(?:\.\/|\/)?[A-Za-z0-9_.\-\/]+\.(png|jpg|jpeg|webp|svg)$/i.test(u);
+      }
+
+      function setButtonContent(buttonEl, label, iconUrl) {
+        buttonEl.textContent = "";
+        var wrap = document.createElement("span");
+        wrap.className = "btn-content";
+        if (iconUrl && validIcon(iconUrl)) {
+          var img = document.createElement("img");
+          img.className = "btn-icon";
+          img.src = iconUrl;
+          img.alt = "";
+          wrap.appendChild(img);
+        }
+        var txt = document.createElement("span");
+        txt.textContent = label;
+        wrap.appendChild(txt);
+        buttonEl.appendChild(wrap);
+      }
 
       function collectExtras() {
         return Array.from(el.extraList.querySelectorAll(".x-row")).map(function (row) {
           return {
             label: val(row.querySelector(".x-label")),
-            url: val(row.querySelector(".x-url"))
+            url: val(row.querySelector(".x-url")),
+            icon: val(row.querySelector(".x-icon"))
           };
         }).filter(function (x) { return x.label || x.url; });
       }
@@ -102,6 +133,7 @@
             '<div class="grid">' +
               '<div><label>Label #' + (i + 1) + '</label><input class="x-label" value="' + (item.label || "").replace(/"/g, "&quot;") + '" /></div>' +
               '<div><label>URL #' + (i + 1) + '</label><input class="x-url" value="' + (item.url || "").replace(/"/g, "&quot;") + '" placeholder="https://..." /></div>' +
+              '<div><label>Icon URL #' + (i + 1) + ' (optional)</label><input class="x-icon" value="' + (item.icon || "").replace(/"/g, "&quot;") + '" placeholder="https://.../icon.png" /></div>' +
               '<button type="button" class="btn btn-secondary x-remove">Remove</button>' +
             '</div>';
           el.extraList.appendChild(row);
@@ -110,7 +142,7 @@
         Array.from(el.extraList.querySelectorAll(".x-remove")).forEach(function (b) {
           b.addEventListener("click", function () { b.closest(".x-row").remove(); onChange(); });
         });
-        Array.from(el.extraList.querySelectorAll(".x-label,.x-url")).forEach(function (i) {
+        Array.from(el.extraList.querySelectorAll(".x-label,.x-url,.x-icon")).forEach(function (i) {
           i.addEventListener("input", onChange);
         });
       }
@@ -121,8 +153,10 @@
         if (val(el.subtitle)) p.set("subtitle", val(el.subtitle));
         if (val(el.pLabel)) p.set("primary_label", val(el.pLabel));
         if (val(el.pUrl)) p.set("primary_url", val(el.pUrl));
+        if (val(el.pIcon)) p.set("primary_icon", val(el.pIcon));
         if (val(el.sLabel)) p.set("secondary_label", val(el.sLabel));
         if (val(el.sUrl)) p.set("secondary_url", val(el.sUrl));
+        if (val(el.sIcon)) p.set("secondary_icon", val(el.sIcon));
         var extras = collectExtras();
         if (extras.length) p.set("extra_buttons", JSON.stringify(extras));
         return "index.html?" + p.toString();
@@ -133,24 +167,27 @@
         el.ok.textContent = "";
         if (!validUrl(val(el.pUrl))) { el.err.textContent = "Primary URL kena bermula https://"; return false; }
         if (!validUrl(val(el.sUrl))) { el.err.textContent = "Secondary URL kena bermula https://"; return false; }
+        if (!validIcon(val(el.pIcon))) { el.err.textContent = "Primary icon kena URL https:// atau nama fail icon (contoh telegram.png)"; return false; }
+        if (!validIcon(val(el.sIcon))) { el.err.textContent = "Secondary icon kena URL https:// atau nama fail icon (contoh whatsapp.png)"; return false; }
         var extras = collectExtras();
         for (var i = 0; i < extras.length; i += 1) {
           if (!extras[i].label || !extras[i].url) { el.err.textContent = "Extra #" + (i + 1) + " perlukan label + URL"; return false; }
           if (!validUrl(extras[i].url)) { el.err.textContent = "Extra URL #" + (i + 1) + " kena https://"; return false; }
+          if (!validIcon(extras[i].icon)) { el.err.textContent = "Extra icon #" + (i + 1) + " kena URL https:// atau nama fail icon"; return false; }
         }
         return true;
       }
 
       function preview() {
-        el.pv1.textContent = val(el.pLabel) || "Primary";
+        setButtonContent(el.pv1, val(el.pLabel) || "Primary", val(el.pIcon));
         el.pv1.href = validUrl(val(el.pUrl)) ? val(el.pUrl) : "#";
-        el.pv2.textContent = val(el.sLabel) || "Secondary";
+        setButtonContent(el.pv2, val(el.sLabel) || "Secondary", val(el.sIcon));
         el.pv2.href = validUrl(val(el.sUrl)) ? val(el.sUrl) : "#";
         el.pvExtra.innerHTML = "";
         collectExtras().forEach(function (x) {
           var a = document.createElement("a");
           a.className = "btn btn-secondary";
-          a.textContent = x.label || "Open";
+          setButtonContent(a, x.label || "Open", x.icon || "");
           a.href = validUrl(x.url) ? x.url : "#";
           a.target = "_blank";
           a.rel = "noopener noreferrer";
@@ -161,8 +198,8 @@
       function saveDraft() {
         localStorage.setItem("reezoLandingDraft", JSON.stringify({
           title: val(el.title), subtitle: val(el.subtitle),
-          primaryLabel: val(el.pLabel), primaryUrl: val(el.pUrl),
-          secondaryLabel: val(el.sLabel), secondaryUrl: val(el.sUrl),
+          primaryLabel: val(el.pLabel), primaryUrl: val(el.pUrl), primaryIcon: val(el.pIcon),
+          secondaryLabel: val(el.sLabel), secondaryUrl: val(el.sUrl), secondaryIcon: val(el.sIcon),
           extraButtons: collectExtras()
         }));
       }
@@ -174,8 +211,10 @@
           if (d.subtitle) el.subtitle.value = d.subtitle;
           if (d.primaryLabel) el.pLabel.value = d.primaryLabel;
           if (d.primaryUrl) el.pUrl.value = d.primaryUrl;
+          if (d.primaryIcon) el.pIcon.value = d.primaryIcon;
           if (d.secondaryLabel) el.sLabel.value = d.secondaryLabel;
           if (d.secondaryUrl) el.sUrl.value = d.secondaryUrl;
+          if (d.secondaryIcon) el.sIcon.value = d.secondaryIcon;
           if (Array.isArray(d.extraButtons)) renderExtras(d.extraButtons);
         } catch (_) {}
       }
@@ -186,13 +225,15 @@
       el.subtitle.value = defaults.subtitle;
       el.pLabel.value = defaults.primaryLabel;
       el.pUrl.value = defaults.primaryUrl;
+      el.pIcon.value = defaults.primaryIcon || "";
       el.sLabel.value = defaults.secondaryLabel;
       el.sUrl.value = defaults.secondaryUrl;
+      el.sIcon.value = defaults.secondaryIcon || "";
       renderExtras(Array.isArray(defaults.extraButtons) ? defaults.extraButtons : []);
       loadDraft();
       preview();
 
-      [el.title, el.subtitle, el.pLabel, el.pUrl, el.sLabel, el.sUrl].forEach(function (n) { n.addEventListener("input", onChange); });
+      [el.title, el.subtitle, el.pLabel, el.pUrl, el.pIcon, el.sLabel, el.sUrl, el.sIcon].forEach(function (n) { n.addEventListener("input", onChange); });
 
       el.addExtra.addEventListener("click", function () {
         var x = collectExtras();

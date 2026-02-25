@@ -11,9 +11,16 @@
   <div class="bg-fx"></div>
   <main class="container">
     <header class="hero">
+      <div class="logo-wrap">
+        <img src="logo.png" alt="Reezo Logo" class="site-logo" />
+      </div>
       <h1 id="title">Reezo Official Links</h1>
       <p id="subtitle">Pilih mana-mana link rasmi di bawah.</p>
     </header>
+
+    <section class="card">
+      <img src="nextexc.png" alt="NEXT Exclusive" class="promo-image" />
+    </section>
 
     <section class="card">
       <h2 class="section-title">Quick Access</h2>
@@ -33,8 +40,10 @@
         subtitle: "Pilih mana-mana link rasmi di bawah.",
         primaryLabel: "Open Bot",
         primaryUrl: "https://t.me/MMHREEZO_BOT",
+        primaryIcon: "telegram.png",
         secondaryLabel: "Open WhatsApp Channel",
         secondaryUrl: "https://whatsapp.com/channel/YOUR_CHANNEL_ID",
+        secondaryIcon: "whatsapp.png",
         extraButtons: []
       };
       var defaults = Object.assign({}, fallback, window.LANDING_DEFAULTS || {});
@@ -48,6 +57,27 @@
       }
 
       function validUrl(u) { return /^https?:\/\//i.test(u); }
+      function validIcon(u) {
+        if (!u) return true;
+        return /^https?:\/\//i.test(u) || /^(?:\.\/|\/)?[A-Za-z0-9_.\-\/]+\.(png|jpg|jpeg|webp|svg)$/i.test(u);
+      }
+
+      function setButtonContent(buttonEl, label, iconUrl) {
+        buttonEl.textContent = "";
+        var wrap = document.createElement("span");
+        wrap.className = "btn-content";
+        if (iconUrl && validIcon(iconUrl)) {
+          var img = document.createElement("img");
+          img.className = "btn-icon";
+          img.src = iconUrl;
+          img.alt = "";
+          wrap.appendChild(img);
+        }
+        var txt = document.createElement("span");
+        txt.textContent = label;
+        wrap.appendChild(txt);
+        buttonEl.appendChild(wrap);
+      }
 
       function readExtra() {
         var raw = q("extra_buttons");
@@ -64,27 +94,30 @@
       var subtitle = q("subtitle") || defaults.subtitle;
       var pLabel = q("primary_label") || defaults.primaryLabel;
       var pUrl = q("primary_url") || defaults.primaryUrl;
+      var pIcon = q("primary_icon") || defaults.primaryIcon || "";
       var sLabel = q("secondary_label") || defaults.secondaryLabel;
       var sUrl = q("secondary_url") || defaults.secondaryUrl;
+      var sIcon = q("secondary_icon") || defaults.secondaryIcon || "";
 
       document.getElementById("title").textContent = title;
       document.getElementById("subtitle").textContent = subtitle;
 
       var pBtn = document.getElementById("primaryBtn");
       var sBtn = document.getElementById("secondaryBtn");
-      pBtn.textContent = pLabel;
+      setButtonContent(pBtn, pLabel, pIcon);
       pBtn.href = validUrl(pUrl) ? pUrl : "#";
-      sBtn.textContent = sLabel;
+      setButtonContent(sBtn, sLabel, sIcon);
       sBtn.href = validUrl(sUrl) ? sUrl : "#";
 
       var extra = document.getElementById("extraBtns");
       readExtra().forEach(function (item) {
         var label = String((item && item.label) || "").trim();
         var url = String((item && item.url) || "").trim();
+        var icon = String((item && item.icon) || "").trim();
         if (!label || !validUrl(url)) return;
         var a = document.createElement("a");
         a.className = "btn btn-secondary";
-        a.textContent = label;
+        setButtonContent(a, label, icon);
         a.href = url;
         a.target = "_blank";
         a.rel = "noopener noreferrer";
