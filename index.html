@@ -19,14 +19,15 @@
       <p id="subtitle">Pilih mana-mana link rasmi di bawah.</p>
     </header>
 
-    <section class="card">
+    <section id="quickCard" class="card is-loading">
       <img src="nextexc.gif" alt="NEXT Exclusive" class="promo-image" />
       <h2 class="section-title">Quick Access</h2>
-      <div class="actions">
+      <div id="mainActions" class="actions">
         <a id="primaryBtn" class="btn btn-primary" href="#" target="_blank" rel="noopener noreferrer">Open Bot</a>
         <a id="secondaryBtn" class="btn btn-secondary" href="#" target="_blank" rel="noopener noreferrer">Open WhatsApp Channel</a>
         <div id="extraBtns" class="actions" style="margin-top:0"></div>
       </div>
+      <div id="loadingText" class="loading-text">Loading latest links...</div>
     </section>
   </main>
 
@@ -102,19 +103,32 @@
           extra.appendChild(a);
         });
 
+        try {
+          localStorage.setItem("reezoLiveConfigCache", JSON.stringify(c));
+        } catch (_) {}
+
+        var card = document.getElementById("quickCard");
+        var loadingText = document.getElementById("loadingText");
+        if (card) card.classList.remove("is-loading");
+        if (loadingText) loadingText.style.display = "none";
       }
 
       async function loadRemote() {
+        var cached = null;
+        try {
+          cached = JSON.parse(localStorage.getItem("reezoLiveConfigCache") || "null");
+        } catch (_) {}
+
         try {
           var resp = await fetch("/api/config", { cache: "no-store" });
           if (!resp.ok) {
-            render(defaults);
+            render(cached || defaults);
             return;
           }
           var out = await resp.json();
-          render(out && out.data ? out.data : defaults);
+          render(out && out.data ? out.data : (cached || defaults));
         } catch (_) {
-          render(defaults);
+          render(cached || defaults);
         }
       }
 

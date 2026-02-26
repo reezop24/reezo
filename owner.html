@@ -257,7 +257,11 @@
             el.err.textContent = out && out.error ? ("Submit gagal: " + out.error) : "Submit gagal";
             return;
           }
-          el.ok.textContent = "Live config updated. User link kekal sama.";
+          if (out.savedKv) {
+            el.ok.textContent = "Live config updated (permanent: KV). User link kekal sama.";
+          } else {
+            el.ok.textContent = "Live config updated sementara (memory). Set KV env untuk permanent.";
+          }
           saveDraft();
         } catch (_) {
           el.err.textContent = "Submit gagal (network/API).";

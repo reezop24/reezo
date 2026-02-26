@@ -185,6 +185,11 @@ textarea { min-height: 86px; resize: vertical; }
 .note { font-size: 12px; color: var(--muted); margin-top: 8px; }
 .error { color: #ffb4b4; min-height: 18px; font-size: 12px; margin-top: 8px; }
 .success { color: #bbf7d0; min-height: 18px; font-size: 12px; margin-top: 8px; }
+.loading-text { color: var(--muted); font-size: 13px; margin-top: 8px; }
+
+.is-loading .actions {
+  display: none;
+}
 
 @keyframes bgFlow {
   0% { background-position: 0% 50%; }
