@@ -65,9 +65,11 @@ export default async function handler(req, res) {
     primaryLabel: "Open Bot",
     primaryUrl: "https://t.me/MMHREEZO_BOT",
     primaryIcon: "telegram.png",
+    primaryEffect: "",
     secondaryLabel: "Open WhatsApp Channel",
     secondaryUrl: "https://whatsapp.com/channel/YOUR_CHANNEL_ID",
     secondaryIcon: "whatsapp.png",
+    secondaryEffect: "",
     extraButtons: []
   };
 
@@ -77,23 +79,24 @@ export default async function handler(req, res) {
       .map((item) => ({
         label: String((item && item.label) || "").trim(),
         url: String((item && item.url) || "").trim(),
-        icon: String((item && item.icon) || "").trim()
+        icon: String((item && item.icon) || "").trim(),
+        effect: String((item && item.effect) || "").trim()
       }))
       .filter((item) => item.label && item.url);
   }
 
   function mergeExtraButtons(existingList, incomingList) {
-    const out = [];
-    const seen = new Set();
-
-    const all = [...normalizeExtraButtons(existingList), ...normalizeExtraButtons(incomingList)];
-    for (const item of all) {
+    const map = new Map();
+    for (const item of normalizeExtraButtons(existingList)) {
       const key = `${item.label.toLowerCase()}|${item.url.toLowerCase()}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push(item);
+      map.set(key, item);
     }
-    return out;
+    // incoming overrides existing on same key (allows editing effect/icon later)
+    for (const item of normalizeExtraButtons(incomingList)) {
+      const key = `${item.label.toLowerCase()}|${item.url.toLowerCase()}`;
+      map.set(key, item);
+    }
+    return Array.from(map.values());
   }
 
   if (method === "GET") {
@@ -125,9 +128,11 @@ export default async function handler(req, res) {
       primaryLabel: String(body.primaryLabel || "").trim(),
       primaryUrl: String(body.primaryUrl || "").trim(),
       primaryIcon: String(body.primaryIcon || "").trim(),
+      primaryEffect: String(body.primaryEffect || "").trim(),
       secondaryLabel: String(body.secondaryLabel || "").trim(),
       secondaryUrl: String(body.secondaryUrl || "").trim(),
       secondaryIcon: String(body.secondaryIcon || "").trim(),
+      secondaryEffect: String(body.secondaryEffect || "").trim(),
       extraButtons: Array.isArray(body.extraButtons) ? body.extraButtons : []
     };
 
@@ -137,10 +142,13 @@ export default async function handler(req, res) {
       subtitle: incoming.subtitle || current.subtitle || FALLBACK_DEFAULTS.subtitle,
       primaryLabel: incoming.primaryLabel || current.primaryLabel || FALLBACK_DEFAULTS.primaryLabel,
       primaryUrl: incoming.primaryUrl || current.primaryUrl || FALLBACK_DEFAULTS.primaryUrl,
-      primaryIcon: incoming.primaryIcon || current.primaryIcon || FALLBACK_DEFAULTS.primaryIcon,
+      // icon/effect allow explicit empty string from owner to clear value
+      primaryIcon: incoming.primaryIcon,
+      primaryEffect: incoming.primaryEffect,
       secondaryLabel: incoming.secondaryLabel || current.secondaryLabel || FALLBACK_DEFAULTS.secondaryLabel,
       secondaryUrl: incoming.secondaryUrl || current.secondaryUrl || FALLBACK_DEFAULTS.secondaryUrl,
-      secondaryIcon: incoming.secondaryIcon || current.secondaryIcon || FALLBACK_DEFAULTS.secondaryIcon,
+      secondaryIcon: incoming.secondaryIcon,
+      secondaryEffect: incoming.secondaryEffect,
       extraButtons: mergeExtraButtons(current.extraButtons, incoming.extraButtons)
     };
 

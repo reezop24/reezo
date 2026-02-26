@@ -27,9 +27,23 @@
         <div><label>Primary Label</label><input id="primaryLabelInput" /></div>
         <div><label>Primary URL</label><input id="primaryUrlInput" placeholder="https://..." /></div>
         <div><label>Primary Icon URL (optional)</label><input id="primaryIconInput" placeholder="telegram.png atau https://..." /></div>
+        <div>
+          <label>Primary Effect</label>
+          <select id="primaryEffectInput">
+            <option value="">None</option>
+            <option value="fire">Api Glow</option>
+          </select>
+        </div>
         <div><label>Secondary Label</label><input id="secondaryLabelInput" /></div>
         <div><label>Secondary URL</label><input id="secondaryUrlInput" placeholder="https://..." /></div>
         <div><label>Secondary Icon URL (optional)</label><input id="secondaryIconInput" placeholder="whatsapp.png atau https://..." /></div>
+        <div>
+          <label>Secondary Effect</label>
+          <select id="secondaryEffectInput">
+            <option value="">None</option>
+            <option value="fire">Api Glow</option>
+          </select>
+        </div>
         <div><label>Owner PIN (required)</label><input id="ownerPinInput" placeholder="Default: 778899 (atau ikut env LANDING_OWNER_PIN)" /></div>
       </div>
 
@@ -66,9 +80,11 @@
         primaryLabel: "Open Bot",
         primaryUrl: "https://t.me/MMHREEZO_BOT",
         primaryIcon: "telegram.png",
+        primaryEffect: "",
         secondaryLabel: "Open WhatsApp Channel",
         secondaryUrl: "https://whatsapp.com/channel/YOUR_CHANNEL_ID",
         secondaryIcon: "whatsapp.png",
+        secondaryEffect: "",
         extraButtons: []
       }, window.LANDING_DEFAULTS || {});
 
@@ -78,9 +94,11 @@
         pLabel: document.getElementById("primaryLabelInput"),
         pUrl: document.getElementById("primaryUrlInput"),
         pIcon: document.getElementById("primaryIconInput"),
+        pEffect: document.getElementById("primaryEffectInput"),
         sLabel: document.getElementById("secondaryLabelInput"),
         sUrl: document.getElementById("secondaryUrlInput"),
         sIcon: document.getElementById("secondaryIconInput"),
+        sEffect: document.getElementById("secondaryEffectInput"),
         pin: document.getElementById("ownerPinInput"),
         extraList: document.getElementById("extraList"),
         addExtra: document.getElementById("addExtra"),
@@ -101,7 +119,9 @@
         return /^https?:\/\//i.test(u) || /^(?:\.\/|\/)?[A-Za-z0-9_.\-\/]+\.(png|jpg|jpeg|webp|svg|gif)$/i.test(u);
       }
 
-      function setButtonContent(buttonEl, label, iconUrl) {
+      function setButtonContent(buttonEl, label, iconUrl, effect) {
+        buttonEl.classList.remove("btn-fire");
+        if (effect === "fire") buttonEl.classList.add("btn-fire");
         buttonEl.textContent = "";
         var wrap = document.createElement("span");
         wrap.className = "btn-content";
@@ -123,7 +143,8 @@
           return {
             label: val(row.querySelector(".x-label")),
             url: val(row.querySelector(".x-url")),
-            icon: val(row.querySelector(".x-icon"))
+            icon: val(row.querySelector(".x-icon")),
+            effect: val(row.querySelector(".x-effect"))
           };
         }).filter(function (x) { return x.label || x.url || x.icon; });
       }
@@ -138,6 +159,7 @@
               '<div><label>Label #' + (i + 1) + '</label><input class="x-label" value="' + (item.label || "").replace(/"/g, "&quot;") + '" /></div>' +
               '<div><label>URL #' + (i + 1) + '</label><input class="x-url" value="' + (item.url || "").replace(/"/g, "&quot;") + '" placeholder="https://..." /></div>' +
               '<div><label>Icon #' + (i + 1) + ' (optional)</label><input class="x-icon" value="' + (item.icon || "").replace(/"/g, "&quot;") + '" placeholder="icon.png atau https://..." /></div>' +
+              '<div><label>Effect #' + (i + 1) + '</label><select class="x-effect"><option value="">None</option><option value="fire"' + ((item.effect || "") === "fire" ? " selected" : "") + '>Api Glow</option></select></div>' +
               '<button type="button" class="btn btn-secondary x-remove">Remove</button>' +
             '</div>';
           el.extraList.appendChild(row);
@@ -146,8 +168,9 @@
         Array.from(el.extraList.querySelectorAll(".x-remove")).forEach(function (b) {
           b.addEventListener("click", function () { b.closest(".x-row").remove(); onChange(); });
         });
-        Array.from(el.extraList.querySelectorAll(".x-label,.x-url,.x-icon")).forEach(function (n) {
+        Array.from(el.extraList.querySelectorAll(".x-label,.x-url,.x-icon,.x-effect")).forEach(function (n) {
           n.addEventListener("input", onChange);
+          n.addEventListener("change", onChange);
         });
       }
 
@@ -158,9 +181,11 @@
           primaryLabel: val(el.pLabel),
           primaryUrl: val(el.pUrl),
           primaryIcon: val(el.pIcon),
+          primaryEffect: val(el.pEffect),
           secondaryLabel: val(el.sLabel),
           secondaryUrl: val(el.sUrl),
           secondaryIcon: val(el.sIcon),
+          secondaryEffect: val(el.sEffect),
           extraButtons: collectExtras()
         };
       }
@@ -183,16 +208,16 @@
       }
 
       function preview() {
-        setButtonContent(el.pv1, val(el.pLabel) || "Primary", val(el.pIcon));
+        setButtonContent(el.pv1, val(el.pLabel) || "Primary", val(el.pIcon), val(el.pEffect));
         el.pv1.href = validUrl(val(el.pUrl)) ? val(el.pUrl) : "#";
-        setButtonContent(el.pv2, val(el.sLabel) || "Secondary", val(el.sIcon));
+        setButtonContent(el.pv2, val(el.sLabel) || "Secondary", val(el.sIcon), val(el.sEffect));
         el.pv2.href = validUrl(val(el.sUrl)) ? val(el.sUrl) : "#";
         el.pvExtra.innerHTML = "";
         collectExtras().forEach(function (x) {
           if (!x.label) return;
           var a = document.createElement("a");
           a.className = "btn btn-secondary";
-          setButtonContent(a, x.label, x.icon || "");
+          setButtonContent(a, x.label, x.icon || "", x.effect || "");
           a.href = validUrl(x.url) ? x.url : "#";
           a.target = "_blank";
           a.rel = "noopener noreferrer";
@@ -215,9 +240,11 @@
           if (p.primaryLabel) el.pLabel.value = p.primaryLabel;
           if (p.primaryUrl) el.pUrl.value = p.primaryUrl;
           if (p.primaryIcon) el.pIcon.value = p.primaryIcon;
+          if (p.primaryEffect) el.pEffect.value = p.primaryEffect;
           if (p.secondaryLabel) el.sLabel.value = p.secondaryLabel;
           if (p.secondaryUrl) el.sUrl.value = p.secondaryUrl;
           if (p.secondaryIcon) el.sIcon.value = p.secondaryIcon;
+          if (p.secondaryEffect) el.sEffect.value = p.secondaryEffect;
           if (Array.isArray(p.extraButtons)) renderExtras(p.extraButtons);
         } catch (_) {}
       }
@@ -234,9 +261,11 @@
           if (p.primaryLabel) el.pLabel.value = p.primaryLabel;
           if (p.primaryUrl) el.pUrl.value = p.primaryUrl;
           if (typeof p.primaryIcon === "string") el.pIcon.value = p.primaryIcon;
+          if (typeof p.primaryEffect === "string") el.pEffect.value = p.primaryEffect;
           if (p.secondaryLabel) el.sLabel.value = p.secondaryLabel;
           if (p.secondaryUrl) el.sUrl.value = p.secondaryUrl;
           if (typeof p.secondaryIcon === "string") el.sIcon.value = p.secondaryIcon;
+          if (typeof p.secondaryEffect === "string") el.sEffect.value = p.secondaryEffect;
           renderExtras(Array.isArray(p.extraButtons) ? p.extraButtons : []);
         } catch (_) {
           // no-op
@@ -275,22 +304,25 @@
       el.pLabel.value = defaults.primaryLabel;
       el.pUrl.value = defaults.primaryUrl;
       el.pIcon.value = defaults.primaryIcon || "";
+      el.pEffect.value = defaults.primaryEffect || "";
       el.sLabel.value = defaults.secondaryLabel;
       el.sUrl.value = defaults.secondaryUrl;
       el.sIcon.value = defaults.secondaryIcon || "";
+      el.sEffect.value = defaults.secondaryEffect || "";
       renderExtras(Array.isArray(defaults.extraButtons) ? defaults.extraButtons : []);
 
       loadDraft();
       loadRemote().then(preview);
       preview();
 
-      [el.title, el.subtitle, el.pLabel, el.pUrl, el.pIcon, el.sLabel, el.sUrl, el.sIcon, el.pin].forEach(function (n) {
+      [el.title, el.subtitle, el.pLabel, el.pUrl, el.pIcon, el.pEffect, el.sLabel, el.sUrl, el.sIcon, el.sEffect, el.pin].forEach(function (n) {
         n.addEventListener("input", onChange);
+        n.addEventListener("change", onChange);
       });
 
       el.addExtra.addEventListener("click", function () {
         var x = collectExtras();
-        x.push({ label: "", url: "", icon: "" });
+        x.push({ label: "", url: "", icon: "", effect: "" });
         renderExtras(x);
         onChange();
       });

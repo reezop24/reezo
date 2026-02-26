@@ -4,8 +4,10 @@ window.LANDING_DEFAULTS = {
   primaryLabel: "Open Bot",
   primaryUrl: "https://t.me/MMHREEZO_BOT",
   primaryIcon: "telegram.png",
+  primaryEffect: "",
   secondaryLabel: "Open WhatsApp Channel",
   secondaryUrl: "https://whatsapp.com/channel/YOUR_CHANNEL_ID",
   secondaryIcon: "whatsapp.png",
+  secondaryEffect: "",
   extraButtons: []
 };

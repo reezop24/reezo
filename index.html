@@ -39,9 +39,11 @@
         primaryLabel: "Open Bot",
         primaryUrl: "https://t.me/MMHREEZO_BOT",
         primaryIcon: "telegram.png",
+        primaryEffect: "",
         secondaryLabel: "Open WhatsApp Channel",
         secondaryUrl: "https://whatsapp.com/channel/YOUR_CHANNEL_ID",
         secondaryIcon: "whatsapp.png",
+        secondaryEffect: "",
         extraButtons: []
       };
       var defaults = Object.assign({}, fallback, window.LANDING_DEFAULTS || {});
@@ -52,7 +54,9 @@
         return /^https?:\/\//i.test(u) || /^(?:\.\/|\/)?[A-Za-z0-9_.\-\/]+\.(png|jpg|jpeg|webp|svg|gif)$/i.test(u);
       }
 
-      function setButtonContent(buttonEl, label, iconUrl) {
+      function setButtonContent(buttonEl, label, iconUrl, effect) {
+        buttonEl.classList.remove("btn-fire");
+        if (effect === "fire") buttonEl.classList.add("btn-fire");
         buttonEl.textContent = "";
         var wrap = document.createElement("span");
         wrap.className = "btn-content";
@@ -82,9 +86,9 @@
 
         var pBtn = document.getElementById("primaryBtn");
         var sBtn = document.getElementById("secondaryBtn");
-        setButtonContent(pBtn, c.primaryLabel || defaults.primaryLabel, c.primaryIcon || "");
+        setButtonContent(pBtn, c.primaryLabel || defaults.primaryLabel, c.primaryIcon || "", c.primaryEffect || "");
         pBtn.href = validUrl(c.primaryUrl) ? c.primaryUrl : "#";
-        setButtonContent(sBtn, c.secondaryLabel || defaults.secondaryLabel, c.secondaryIcon || "");
+        setButtonContent(sBtn, c.secondaryLabel || defaults.secondaryLabel, c.secondaryIcon || "", c.secondaryEffect || "");
         sBtn.href = validUrl(c.secondaryUrl) ? c.secondaryUrl : "#";
 
         var extra = document.getElementById("extraBtns");
@@ -96,7 +100,7 @@
           if (!label || !validUrl(url)) return;
           var a = document.createElement("a");
           a.className = "btn btn-secondary";
-          setButtonContent(a, label, icon);
+          setButtonContent(a, label, icon, String((item && item.effect) || "").trim());
           a.href = url;
           a.target = "_blank";
           a.rel = "noopener noreferrer";
