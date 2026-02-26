@@ -27,7 +27,6 @@
         <a id="secondaryBtn" class="btn btn-secondary" href="#" target="_blank" rel="noopener noreferrer">Open WhatsApp Channel</a>
         <div id="extraBtns" class="actions" style="margin-top:0"></div>
       </div>
-      <div id="error" class="error"></div>
     </section>
   </main>
 
@@ -103,10 +102,6 @@
           extra.appendChild(a);
         });
 
-        var error = document.getElementById("error");
-        error.textContent = /YOUR_CHANNEL_ID/i.test(c.secondaryUrl || "")
-          ? "Sila update secondaryUrl dari owner page"
-          : "";
       }
 
       async function loadRemote() {
