@@ -11,9 +11,7 @@
   <div class="bg-fx"></div>
   <main class="container">
     <header class="hero">
-      <div class="logo-wrap">
-        <img src="logo.png" alt="Reezo Logo" class="site-logo" />
-      </div>
+      <div class="logo-wrap"><img src="logo.png" alt="Reezo Logo" class="site-logo" /></div>
       <h1 id="title">Reezo Official Links</h1>
       <p id="subtitle">Pilih mana-mana link rasmi di bawah.</p>
     </header>
@@ -45,18 +43,10 @@
       };
       var defaults = Object.assign({}, fallback, window.LANDING_DEFAULTS || {});
 
-      function q(name) {
-        try {
-          return new URLSearchParams(window.location.search).get(name) || "";
-        } catch (_) {
-          return "";
-        }
-      }
-
       function validUrl(u) { return /^https?:\/\//i.test(u); }
       function validIcon(u) {
         if (!u) return true;
-        return /^https?:\/\//i.test(u) || /^(?:\.\/|\/)?[A-Za-z0-9_.\-\/]+\.(png|jpg|jpeg|webp|svg)$/i.test(u);
+        return /^https?:\/\//i.test(u) || /^(?:\.\/|\/)?[A-Za-z0-9_.\-\/]+\.(png|jpg|jpeg|webp|svg|gif)$/i.test(u);
       }
 
       function setButtonContent(buttonEl, label, iconUrl) {
@@ -76,54 +66,61 @@
         buttonEl.appendChild(wrap);
       }
 
-      function readExtra() {
-        var raw = q("extra_buttons");
-        if (!raw) return Array.isArray(defaults.extraButtons) ? defaults.extraButtons : [];
+      function sanitizeConfig(cfg) {
+        var c = Object.assign({}, defaults, cfg || {});
+        c.extraButtons = Array.isArray(c.extraButtons) ? c.extraButtons : [];
+        return c;
+      }
+
+      function render(cfg) {
+        var c = sanitizeConfig(cfg);
+        document.getElementById("title").textContent = c.title || defaults.title;
+        document.getElementById("subtitle").textContent = c.subtitle || defaults.subtitle;
+
+        var pBtn = document.getElementById("primaryBtn");
+        var sBtn = document.getElementById("secondaryBtn");
+        setButtonContent(pBtn, c.primaryLabel || defaults.primaryLabel, c.primaryIcon || "");
+        pBtn.href = validUrl(c.primaryUrl) ? c.primaryUrl : "#";
+        setButtonContent(sBtn, c.secondaryLabel || defaults.secondaryLabel, c.secondaryIcon || "");
+        sBtn.href = validUrl(c.secondaryUrl) ? c.secondaryUrl : "#";
+
+        var extra = document.getElementById("extraBtns");
+        extra.innerHTML = "";
+        c.extraButtons.forEach(function (item) {
+          var label = String((item && item.label) || "").trim();
+          var url = String((item && item.url) || "").trim();
+          var icon = String((item && item.icon) || "").trim();
+          if (!label || !validUrl(url)) return;
+          var a = document.createElement("a");
+          a.className = "btn btn-secondary";
+          setButtonContent(a, label, icon);
+          a.href = url;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          extra.appendChild(a);
+        });
+
+        var error = document.getElementById("error");
+        error.textContent = /YOUR_CHANNEL_ID/i.test(c.secondaryUrl || "")
+          ? "Sila update secondaryUrl dari owner page"
+          : "";
+      }
+
+      async function loadRemote() {
         try {
-          var parsed = JSON.parse(raw);
-          return Array.isArray(parsed) ? parsed : [];
+          var resp = await fetch("/api/config", { cache: "no-store" });
+          if (!resp.ok) {
+            render(defaults);
+            return;
+          }
+          var out = await resp.json();
+          render(out && out.data ? out.data : defaults);
         } catch (_) {
-          return [];
+          render(defaults);
         }
       }
 
-      var title = q("title") || defaults.title;
-      var subtitle = q("subtitle") || defaults.subtitle;
-      var pLabel = q("primary_label") || defaults.primaryLabel;
-      var pUrl = q("primary_url") || defaults.primaryUrl;
-      var pIcon = q("primary_icon") || defaults.primaryIcon || "";
-      var sLabel = q("secondary_label") || defaults.secondaryLabel;
-      var sUrl = q("secondary_url") || defaults.secondaryUrl;
-      var sIcon = q("secondary_icon") || defaults.secondaryIcon || "";
-
-      document.getElementById("title").textContent = title;
-      document.getElementById("subtitle").textContent = subtitle;
-
-      var pBtn = document.getElementById("primaryBtn");
-      var sBtn = document.getElementById("secondaryBtn");
-      setButtonContent(pBtn, pLabel, pIcon);
-      pBtn.href = validUrl(pUrl) ? pUrl : "#";
-      setButtonContent(sBtn, sLabel, sIcon);
-      sBtn.href = validUrl(sUrl) ? sUrl : "#";
-
-      var extra = document.getElementById("extraBtns");
-      readExtra().forEach(function (item) {
-        var label = String((item && item.label) || "").trim();
-        var url = String((item && item.url) || "").trim();
-        var icon = String((item && item.icon) || "").trim();
-        if (!label || !validUrl(url)) return;
-        var a = document.createElement("a");
-        a.className = "btn btn-secondary";
-        setButtonContent(a, label, icon);
-        a.href = url;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        extra.appendChild(a);
-      });
-
-      if (/YOUR_CHANNEL_ID/i.test(sUrl)) {
-        document.getElementById("error").textContent = "Sila update secondaryUrl dalam config.js";
-      }
+      loadRemote();
     })();
   </script>
 </body>

@@ -11,11 +11,9 @@
   <div class="bg-fx"></div>
   <main class="container">
     <header class="hero">
-      <div class="logo-wrap">
-        <img src="logo.png" alt="Reezo Logo" class="site-logo" />
-      </div>
+      <div class="logo-wrap"><img src="logo.png" alt="Reezo Logo" class="site-logo" /></div>
       <h1>Owner Builder</h1>
-      <p>Set semua button di sini. User page ada di <code>/</code>.</p>
+      <p>Update sekali, user guna link yang sama: <code>/</code>.</p>
     </header>
 
     <section class="card">
@@ -25,10 +23,11 @@
         <div><label>Subtitle</label><textarea id="subtitleInput"></textarea></div>
         <div><label>Primary Label</label><input id="primaryLabelInput" /></div>
         <div><label>Primary URL</label><input id="primaryUrlInput" placeholder="https://..." /></div>
-        <div><label>Primary Icon URL (optional)</label><input id="primaryIconInput" placeholder="https://.../icon.png" /></div>
+        <div><label>Primary Icon URL (optional)</label><input id="primaryIconInput" placeholder="telegram.png atau https://..." /></div>
         <div><label>Secondary Label</label><input id="secondaryLabelInput" /></div>
         <div><label>Secondary URL</label><input id="secondaryUrlInput" placeholder="https://..." /></div>
-        <div><label>Secondary Icon URL (optional)</label><input id="secondaryIconInput" placeholder="https://.../icon.png" /></div>
+        <div><label>Secondary Icon URL (optional)</label><input id="secondaryIconInput" placeholder="whatsapp.png atau https://..." /></div>
+        <div><label>Owner PIN (optional)</label><input id="ownerPinInput" placeholder="Isi jika LANDING_OWNER_PIN diset" /></div>
       </div>
 
       <div class="card" style="margin-top:12px;">
@@ -38,8 +37,9 @@
       </div>
 
       <div class="actions">
-        <button id="openUser" class="btn btn-primary" type="button">Open User Page</button>
-        <button id="copyUser" class="btn btn-secondary" type="button">Copy User URL</button>
+        <button id="submitConfig" class="btn btn-primary" type="button">Submit (Update Live)</button>
+        <button id="openUser" class="btn btn-secondary" type="button">Open User Page</button>
+        <button id="copyUser" class="btn btn-secondary" type="button">Copy User Link</button>
       </div>
       <div id="error" class="error"></div>
       <div id="success" class="success"></div>
@@ -52,7 +52,6 @@
         <a id="pv2" class="btn btn-secondary" href="#" target="_blank" rel="noopener noreferrer">Secondary</a>
         <div id="pvExtra" class="actions" style="margin-top:0"></div>
       </div>
-      <p class="note">Tip: selepas puas hati, copy URL dan share terus.</p>
     </section>
   </main>
 
@@ -79,8 +78,10 @@
         sLabel: document.getElementById("secondaryLabelInput"),
         sUrl: document.getElementById("secondaryUrlInput"),
         sIcon: document.getElementById("secondaryIconInput"),
+        pin: document.getElementById("ownerPinInput"),
         extraList: document.getElementById("extraList"),
         addExtra: document.getElementById("addExtra"),
+        submit: document.getElementById("submitConfig"),
         openUser: document.getElementById("openUser"),
         copyUser: document.getElementById("copyUser"),
         err: document.getElementById("error"),
@@ -94,7 +95,7 @@
       function validUrl(u) { return /^https?:\/\//i.test(u); }
       function validIcon(u) {
         if (!u) return true;
-        return /^https?:\/\//i.test(u) || /^(?:\.\/|\/)?[A-Za-z0-9_.\-\/]+\.(png|jpg|jpeg|webp|svg)$/i.test(u);
+        return /^https?:\/\//i.test(u) || /^(?:\.\/|\/)?[A-Za-z0-9_.\-\/]+\.(png|jpg|jpeg|webp|svg|gif)$/i.test(u);
       }
 
       function setButtonContent(buttonEl, label, iconUrl) {
@@ -121,7 +122,7 @@
             url: val(row.querySelector(".x-url")),
             icon: val(row.querySelector(".x-icon"))
           };
-        }).filter(function (x) { return x.label || x.url; });
+        }).filter(function (x) { return x.label || x.url || x.icon; });
       }
 
       function renderExtras(list) {
@@ -133,7 +134,7 @@
             '<div class="grid">' +
               '<div><label>Label #' + (i + 1) + '</label><input class="x-label" value="' + (item.label || "").replace(/"/g, "&quot;") + '" /></div>' +
               '<div><label>URL #' + (i + 1) + '</label><input class="x-url" value="' + (item.url || "").replace(/"/g, "&quot;") + '" placeholder="https://..." /></div>' +
-              '<div><label>Icon URL #' + (i + 1) + ' (optional)</label><input class="x-icon" value="' + (item.icon || "").replace(/"/g, "&quot;") + '" placeholder="https://.../icon.png" /></div>' +
+              '<div><label>Icon #' + (i + 1) + ' (optional)</label><input class="x-icon" value="' + (item.icon || "").replace(/"/g, "&quot;") + '" placeholder="icon.png atau https://..." /></div>' +
               '<button type="button" class="btn btn-secondary x-remove">Remove</button>' +
             '</div>';
           el.extraList.appendChild(row);
@@ -142,38 +143,38 @@
         Array.from(el.extraList.querySelectorAll(".x-remove")).forEach(function (b) {
           b.addEventListener("click", function () { b.closest(".x-row").remove(); onChange(); });
         });
-        Array.from(el.extraList.querySelectorAll(".x-label,.x-url,.x-icon")).forEach(function (i) {
-          i.addEventListener("input", onChange);
+        Array.from(el.extraList.querySelectorAll(".x-label,.x-url,.x-icon")).forEach(function (n) {
+          n.addEventListener("input", onChange);
         });
       }
 
-      function buildUrl() {
-        var p = new URLSearchParams();
-        if (val(el.title)) p.set("title", val(el.title));
-        if (val(el.subtitle)) p.set("subtitle", val(el.subtitle));
-        if (val(el.pLabel)) p.set("primary_label", val(el.pLabel));
-        if (val(el.pUrl)) p.set("primary_url", val(el.pUrl));
-        if (val(el.pIcon)) p.set("primary_icon", val(el.pIcon));
-        if (val(el.sLabel)) p.set("secondary_label", val(el.sLabel));
-        if (val(el.sUrl)) p.set("secondary_url", val(el.sUrl));
-        if (val(el.sIcon)) p.set("secondary_icon", val(el.sIcon));
-        var extras = collectExtras();
-        if (extras.length) p.set("extra_buttons", JSON.stringify(extras));
-        return "index.html?" + p.toString();
+      function payload() {
+        return {
+          title: val(el.title),
+          subtitle: val(el.subtitle),
+          primaryLabel: val(el.pLabel),
+          primaryUrl: val(el.pUrl),
+          primaryIcon: val(el.pIcon),
+          secondaryLabel: val(el.sLabel),
+          secondaryUrl: val(el.sUrl),
+          secondaryIcon: val(el.sIcon),
+          extraButtons: collectExtras()
+        };
       }
 
       function validate() {
         el.err.textContent = "";
         el.ok.textContent = "";
-        if (!validUrl(val(el.pUrl))) { el.err.textContent = "Primary URL kena bermula https://"; return false; }
-        if (!validUrl(val(el.sUrl))) { el.err.textContent = "Secondary URL kena bermula https://"; return false; }
-        if (!validIcon(val(el.pIcon))) { el.err.textContent = "Primary icon kena URL https:// atau nama fail icon (contoh telegram.png)"; return false; }
-        if (!validIcon(val(el.sIcon))) { el.err.textContent = "Secondary icon kena URL https:// atau nama fail icon (contoh whatsapp.png)"; return false; }
-        var extras = collectExtras();
-        for (var i = 0; i < extras.length; i += 1) {
-          if (!extras[i].label || !extras[i].url) { el.err.textContent = "Extra #" + (i + 1) + " perlukan label + URL"; return false; }
-          if (!validUrl(extras[i].url)) { el.err.textContent = "Extra URL #" + (i + 1) + " kena https://"; return false; }
-          if (!validIcon(extras[i].icon)) { el.err.textContent = "Extra icon #" + (i + 1) + " kena URL https:// atau nama fail icon"; return false; }
+        var p = payload();
+        if (!validUrl(p.primaryUrl)) { el.err.textContent = "Primary URL kena https://"; return false; }
+        if (!validUrl(p.secondaryUrl)) { el.err.textContent = "Secondary URL kena https://"; return false; }
+        if (!validIcon(p.primaryIcon)) { el.err.textContent = "Primary icon tak valid"; return false; }
+        if (!validIcon(p.secondaryIcon)) { el.err.textContent = "Secondary icon tak valid"; return false; }
+        for (var i = 0; i < p.extraButtons.length; i += 1) {
+          var x = p.extraButtons[i];
+          if (!x.label || !x.url) { el.err.textContent = "Extra #" + (i + 1) + " perlukan label + URL"; return false; }
+          if (!validUrl(x.url)) { el.err.textContent = "Extra URL #" + (i + 1) + " kena https://"; return false; }
+          if (!validIcon(x.icon)) { el.err.textContent = "Extra icon #" + (i + 1) + " tak valid"; return false; }
         }
         return true;
       }
@@ -185,9 +186,10 @@
         el.pv2.href = validUrl(val(el.sUrl)) ? val(el.sUrl) : "#";
         el.pvExtra.innerHTML = "";
         collectExtras().forEach(function (x) {
+          if (!x.label) return;
           var a = document.createElement("a");
           a.className = "btn btn-secondary";
-          setButtonContent(a, x.label || "Open", x.icon || "");
+          setButtonContent(a, x.label, x.icon || "");
           a.href = validUrl(x.url) ? x.url : "#";
           a.target = "_blank";
           a.rel = "noopener noreferrer";
@@ -196,27 +198,67 @@
       }
 
       function saveDraft() {
-        localStorage.setItem("reezoLandingDraft", JSON.stringify({
-          title: val(el.title), subtitle: val(el.subtitle),
-          primaryLabel: val(el.pLabel), primaryUrl: val(el.pUrl), primaryIcon: val(el.pIcon),
-          secondaryLabel: val(el.sLabel), secondaryUrl: val(el.sUrl), secondaryIcon: val(el.sIcon),
-          extraButtons: collectExtras()
-        }));
+        localStorage.setItem("reezoLandingDraft", JSON.stringify({ pin: val(el.pin), data: payload() }));
       }
 
       function loadDraft() {
         try {
           var d = JSON.parse(localStorage.getItem("reezoLandingDraft") || "{}");
-          if (d.title) el.title.value = d.title;
-          if (d.subtitle) el.subtitle.value = d.subtitle;
-          if (d.primaryLabel) el.pLabel.value = d.primaryLabel;
-          if (d.primaryUrl) el.pUrl.value = d.primaryUrl;
-          if (d.primaryIcon) el.pIcon.value = d.primaryIcon;
-          if (d.secondaryLabel) el.sLabel.value = d.secondaryLabel;
-          if (d.secondaryUrl) el.sUrl.value = d.secondaryUrl;
-          if (d.secondaryIcon) el.sIcon.value = d.secondaryIcon;
-          if (Array.isArray(d.extraButtons)) renderExtras(d.extraButtons);
+          if (d.pin) el.pin.value = d.pin;
+          if (!d.data) return;
+          var p = d.data;
+          if (p.title) el.title.value = p.title;
+          if (p.subtitle) el.subtitle.value = p.subtitle;
+          if (p.primaryLabel) el.pLabel.value = p.primaryLabel;
+          if (p.primaryUrl) el.pUrl.value = p.primaryUrl;
+          if (p.primaryIcon) el.pIcon.value = p.primaryIcon;
+          if (p.secondaryLabel) el.sLabel.value = p.secondaryLabel;
+          if (p.secondaryUrl) el.sUrl.value = p.secondaryUrl;
+          if (p.secondaryIcon) el.sIcon.value = p.secondaryIcon;
+          if (Array.isArray(p.extraButtons)) renderExtras(p.extraButtons);
         } catch (_) {}
+      }
+
+      async function loadRemote() {
+        try {
+          var resp = await fetch("/api/config", { cache: "no-store" });
+          if (!resp.ok) return;
+          var out = await resp.json();
+          if (!out || !out.data) return;
+          var p = out.data;
+          if (p.title) el.title.value = p.title;
+          if (p.subtitle) el.subtitle.value = p.subtitle;
+          if (p.primaryLabel) el.pLabel.value = p.primaryLabel;
+          if (p.primaryUrl) el.pUrl.value = p.primaryUrl;
+          if (typeof p.primaryIcon === "string") el.pIcon.value = p.primaryIcon;
+          if (p.secondaryLabel) el.sLabel.value = p.secondaryLabel;
+          if (p.secondaryUrl) el.sUrl.value = p.secondaryUrl;
+          if (typeof p.secondaryIcon === "string") el.sIcon.value = p.secondaryIcon;
+          renderExtras(Array.isArray(p.extraButtons) ? p.extraButtons : []);
+        } catch (_) {
+          // no-op
+        }
+      }
+
+      async function submitRemote() {
+        if (!validate()) return;
+        try {
+          var p = payload();
+          var resp = await fetch("/api/config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(Object.assign({}, p, { pin: val(el.pin) }))
+          });
+          var out = await resp.json();
+          if (!resp.ok || !out.ok) {
+            el.err.textContent = out && out.error ? ("Submit gagal: " + out.error) : "Submit gagal";
+            return;
+          }
+          el.ok.textContent = "Live config updated. User link kekal sama.";
+          saveDraft();
+        } catch (_) {
+          el.err.textContent = "Submit gagal (network/API).";
+        }
       }
 
       function onChange() { preview(); saveDraft(); }
@@ -230,31 +272,31 @@
       el.sUrl.value = defaults.secondaryUrl;
       el.sIcon.value = defaults.secondaryIcon || "";
       renderExtras(Array.isArray(defaults.extraButtons) ? defaults.extraButtons : []);
+
       loadDraft();
+      loadRemote().then(preview);
       preview();
 
-      [el.title, el.subtitle, el.pLabel, el.pUrl, el.pIcon, el.sLabel, el.sUrl, el.sIcon].forEach(function (n) { n.addEventListener("input", onChange); });
+      [el.title, el.subtitle, el.pLabel, el.pUrl, el.pIcon, el.sLabel, el.sUrl, el.sIcon, el.pin].forEach(function (n) {
+        n.addEventListener("input", onChange);
+      });
 
       el.addExtra.addEventListener("click", function () {
         var x = collectExtras();
-        x.push({ label: "", url: "" });
+        x.push({ label: "", url: "", icon: "" });
         renderExtras(x);
         onChange();
       });
 
-      el.openUser.addEventListener("click", function () {
-        if (!validate()) return;
-        window.open(buildUrl(), "_blank", "noopener");
-      });
-
+      el.submit.addEventListener("click", submitRemote);
+      el.openUser.addEventListener("click", function () { window.open("/", "_blank", "noopener"); });
       el.copyUser.addEventListener("click", async function () {
-        if (!validate()) return;
-        var full = new URL(buildUrl(), window.location.href).toString();
+        var link = new URL("/", window.location.href).toString();
         try {
-          await navigator.clipboard.writeText(full);
-          el.ok.textContent = "User URL copied.";
+          await navigator.clipboard.writeText(link);
+          el.ok.textContent = "User link copied.";
         } catch (_) {
-          el.ok.textContent = "Copy manual: " + full;
+          el.ok.textContent = "Copy manual: " + link;
         }
       });
     })();
