@@ -48,6 +48,42 @@ export default async function handler(req, res) {
   }
 
   const KEY = "landing_config_v1";
+  const FALLBACK_DEFAULTS = {
+    title: "Reezo Official Links",
+    subtitle: "Pilih mana-mana link rasmi di bawah.",
+    primaryLabel: "Open Bot",
+    primaryUrl: "https://t.me/MMHREEZO_BOT",
+    primaryIcon: "telegram.png",
+    secondaryLabel: "Open WhatsApp Channel",
+    secondaryUrl: "https://whatsapp.com/channel/YOUR_CHANNEL_ID",
+    secondaryIcon: "whatsapp.png",
+    extraButtons: []
+  };
+
+  function normalizeExtraButtons(list) {
+    if (!Array.isArray(list)) return [];
+    return list
+      .map((item) => ({
+        label: String((item && item.label) || "").trim(),
+        url: String((item && item.url) || "").trim(),
+        icon: String((item && item.icon) || "").trim()
+      }))
+      .filter((item) => item.label && item.url);
+  }
+
+  function mergeExtraButtons(existingList, incomingList) {
+    const out = [];
+    const seen = new Set();
+
+    const all = [...normalizeExtraButtons(existingList), ...normalizeExtraButtons(incomingList)];
+    for (const item of all) {
+      const key = `${item.label.toLowerCase()}|${item.url.toLowerCase()}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(item);
+    }
+    return out;
+  }
 
   if (method === "GET") {
     const kvValue = await kvGet(KEY);
@@ -71,7 +107,8 @@ export default async function handler(req, res) {
       return res.status(401).json({ ok: false, error: "invalid_pin" });
     }
 
-    const payload = {
+    const current = (await kvGet(KEY)) || globalThis.__landingConfigStore || FALLBACK_DEFAULTS;
+    const incoming = {
       title: String(body.title || "").trim(),
       subtitle: String(body.subtitle || "").trim(),
       primaryLabel: String(body.primaryLabel || "").trim(),
@@ -81,6 +118,19 @@ export default async function handler(req, res) {
       secondaryUrl: String(body.secondaryUrl || "").trim(),
       secondaryIcon: String(body.secondaryIcon || "").trim(),
       extraButtons: Array.isArray(body.extraButtons) ? body.extraButtons : []
+    };
+
+    // Keep prior saved values if incoming fields are empty; append extra buttons (do not overwrite old ones).
+    const payload = {
+      title: incoming.title || current.title || FALLBACK_DEFAULTS.title,
+      subtitle: incoming.subtitle || current.subtitle || FALLBACK_DEFAULTS.subtitle,
+      primaryLabel: incoming.primaryLabel || current.primaryLabel || FALLBACK_DEFAULTS.primaryLabel,
+      primaryUrl: incoming.primaryUrl || current.primaryUrl || FALLBACK_DEFAULTS.primaryUrl,
+      primaryIcon: incoming.primaryIcon || current.primaryIcon || FALLBACK_DEFAULTS.primaryIcon,
+      secondaryLabel: incoming.secondaryLabel || current.secondaryLabel || FALLBACK_DEFAULTS.secondaryLabel,
+      secondaryUrl: incoming.secondaryUrl || current.secondaryUrl || FALLBACK_DEFAULTS.secondaryUrl,
+      secondaryIcon: incoming.secondaryIcon || current.secondaryIcon || FALLBACK_DEFAULTS.secondaryIcon,
+      extraButtons: mergeExtraButtons(current.extraButtons, incoming.extraButtons)
     };
 
     globalThis.__landingConfigStore = payload;
