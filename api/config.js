@@ -22,9 +22,24 @@ export default async function handler(req, res) {
     });
     if (!resp.ok) return null;
     const data = await resp.json();
-    if (!data || typeof data.result !== "string") return null;
+    if (!data || data.result == null) return null;
     try {
-      return JSON.parse(data.result);
+      // Normal case: result is JSON string
+      if (typeof data.result === "string") {
+        const parsed = JSON.parse(data.result);
+        // Migration helper: older bad write could store ["{...json...}"]
+        if (Array.isArray(parsed) && parsed.length === 1 && typeof parsed[0] === "string") {
+          try {
+            return JSON.parse(parsed[0]);
+          } catch (_) {
+            return null;
+          }
+        }
+        return parsed;
+      }
+      // Some clients may return object directly.
+      if (typeof data.result === "object") return data.result;
+      return null;
     } catch (_) {
       return null;
     }
@@ -35,14 +50,10 @@ export default async function handler(req, res) {
     const token = process.env.KV_REST_API_TOKEN;
     if (!base || !token) return false;
 
-    const url = base.replace(/\/$/, "") + "/set/" + encodeURIComponent(key);
+    const serialized = encodeURIComponent(JSON.stringify(value));
+    const url = base.replace(/\/$/, "") + "/set/" + encodeURIComponent(key) + "/" + serialized;
     const resp = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + token,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify([JSON.stringify(value)])
+      headers: { Authorization: "Bearer " + token }
     });
     return resp.ok;
   }
