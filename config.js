@@ -5,9 +5,11 @@ window.LANDING_DEFAULTS = {
   primaryUrl: "https://t.me/MMHREEZO_BOT",
   primaryIcon: "telegram.png",
   primaryEffect: "",
+  primaryColor: "",
   secondaryLabel: "Open WhatsApp Channel",
   secondaryUrl: "https://whatsapp.com/channel/YOUR_CHANNEL_ID",
   secondaryIcon: "whatsapp.png",
   secondaryEffect: "",
+  secondaryColor: "",
   extraButtons: []
 };

@@ -66,10 +66,12 @@ export default async function handler(req, res) {
     primaryUrl: "https://t.me/MMHREEZO_BOT",
     primaryIcon: "telegram.png",
     primaryEffect: "",
+    primaryColor: "",
     secondaryLabel: "Open WhatsApp Channel",
     secondaryUrl: "https://whatsapp.com/channel/YOUR_CHANNEL_ID",
     secondaryIcon: "whatsapp.png",
     secondaryEffect: "",
+    secondaryColor: "",
     extraButtons: []
   };
 
@@ -80,7 +82,8 @@ export default async function handler(req, res) {
         label: String((item && item.label) || "").trim(),
         url: String((item && item.url) || "").trim(),
         icon: String((item && item.icon) || "").trim(),
-        effect: String((item && item.effect) || "").trim()
+        effect: String((item && item.effect) || "").trim(),
+        color: String((item && item.color) || "").trim()
       }))
       .filter((item) => item.label && item.url);
   }
@@ -129,10 +132,12 @@ export default async function handler(req, res) {
       primaryUrl: String(body.primaryUrl || "").trim(),
       primaryIcon: String(body.primaryIcon || "").trim(),
       primaryEffect: String(body.primaryEffect || "").trim(),
+      primaryColor: String(body.primaryColor || "").trim(),
       secondaryLabel: String(body.secondaryLabel || "").trim(),
       secondaryUrl: String(body.secondaryUrl || "").trim(),
       secondaryIcon: String(body.secondaryIcon || "").trim(),
       secondaryEffect: String(body.secondaryEffect || "").trim(),
+      secondaryColor: String(body.secondaryColor || "").trim(),
       extraButtons: Array.isArray(body.extraButtons) ? body.extraButtons : []
     };
 
@@ -145,10 +150,12 @@ export default async function handler(req, res) {
       // icon/effect allow explicit empty string from owner to clear value
       primaryIcon: incoming.primaryIcon,
       primaryEffect: incoming.primaryEffect,
+      primaryColor: incoming.primaryColor,
       secondaryLabel: incoming.secondaryLabel || current.secondaryLabel || FALLBACK_DEFAULTS.secondaryLabel,
       secondaryUrl: incoming.secondaryUrl || current.secondaryUrl || FALLBACK_DEFAULTS.secondaryUrl,
       secondaryIcon: incoming.secondaryIcon,
       secondaryEffect: incoming.secondaryEffect,
+      secondaryColor: incoming.secondaryColor,
       extraButtons: mergeExtraButtons(current.extraButtons, incoming.extraButtons)
     };
 

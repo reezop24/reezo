@@ -28,6 +28,13 @@
         <div><label>Primary URL</label><input id="primaryUrlInput" placeholder="https://..." /></div>
         <div><label>Primary Icon URL (optional)</label><input id="primaryIconInput" placeholder="telegram.png atau https://..." /></div>
         <div>
+          <label>Primary Color (optional)</label>
+          <div class="color-field">
+            <input id="primaryColorPicker" class="color-picker" type="color" value="#ff8c3a" />
+            <input id="primaryColorInput" placeholder="#FF8C3A (kosong = default)" />
+          </div>
+        </div>
+        <div>
           <label>Primary Effect</label>
           <select id="primaryEffectInput">
             <option value="">None</option>
@@ -38,13 +45,20 @@
         <div><label>Secondary URL</label><input id="secondaryUrlInput" placeholder="https://..." /></div>
         <div><label>Secondary Icon URL (optional)</label><input id="secondaryIconInput" placeholder="whatsapp.png atau https://..." /></div>
         <div>
+          <label>Secondary Color (optional)</label>
+          <div class="color-field">
+            <input id="secondaryColorPicker" class="color-picker" type="color" value="#5a4a66" />
+            <input id="secondaryColorInput" placeholder="#5A4A66 (kosong = default)" />
+          </div>
+        </div>
+        <div>
           <label>Secondary Effect</label>
           <select id="secondaryEffectInput">
             <option value="">None</option>
             <option value="fire">Api Glow</option>
           </select>
         </div>
-        <div><label>Owner PIN (required)</label><input id="ownerPinInput" placeholder="Default: 778899 (atau ikut env LANDING_OWNER_PIN)" /></div>
+        <div><label>Owner PIN (required)</label><input id="ownerPinInput" autocomplete="off" placeholder="Default: 778899 (atau ikut env LANDING_OWNER_PIN)" /></div>
       </div>
 
       <div class="card" style="margin-top:12px;">
@@ -81,10 +95,12 @@
         primaryUrl: "https://t.me/MMHREEZO_BOT",
         primaryIcon: "telegram.png",
         primaryEffect: "",
+        primaryColor: "",
         secondaryLabel: "Open WhatsApp Channel",
         secondaryUrl: "https://whatsapp.com/channel/YOUR_CHANNEL_ID",
         secondaryIcon: "whatsapp.png",
         secondaryEffect: "",
+        secondaryColor: "",
         extraButtons: []
       }, window.LANDING_DEFAULTS || {});
 
@@ -94,10 +110,14 @@
         pLabel: document.getElementById("primaryLabelInput"),
         pUrl: document.getElementById("primaryUrlInput"),
         pIcon: document.getElementById("primaryIconInput"),
+        pColor: document.getElementById("primaryColorInput"),
+        pColorPicker: document.getElementById("primaryColorPicker"),
         pEffect: document.getElementById("primaryEffectInput"),
         sLabel: document.getElementById("secondaryLabelInput"),
         sUrl: document.getElementById("secondaryUrlInput"),
         sIcon: document.getElementById("secondaryIconInput"),
+        sColor: document.getElementById("secondaryColorInput"),
+        sColorPicker: document.getElementById("secondaryColorPicker"),
         sEffect: document.getElementById("secondaryEffectInput"),
         pin: document.getElementById("ownerPinInput"),
         extraList: document.getElementById("extraList"),
@@ -118,10 +138,59 @@
         if (!u) return true;
         return /^https?:\/\//i.test(u) || /^(?:\.\/|\/)?[A-Za-z0-9_.\-\/]+\.(png|jpg|jpeg|webp|svg|gif)$/i.test(u);
       }
+      function validHexColor(v) {
+        return /^#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/.test(String(v || "").trim());
+      }
+      function normalizeHex(v) {
+        var s = String(v || "").trim();
+        if (!validHexColor(s)) return "";
+        if (s.length === 4) return "#" + s[1] + s[1] + s[2] + s[2] + s[3] + s[3];
+        return s;
+      }
+      function textColorFor(bgHex) {
+        var hex = normalizeHex(bgHex).slice(1);
+        if (hex.length !== 6) return "";
+        var r = parseInt(hex.slice(0, 2), 16);
+        var g = parseInt(hex.slice(2, 4), 16);
+        var b = parseInt(hex.slice(4, 6), 16);
+        var yiq = (r * 299 + g * 587 + b * 114) / 1000;
+        return yiq >= 160 ? "#1b1020" : "#fff7ff";
+      }
+      function applyButtonColor(buttonEl, colorHex) {
+        buttonEl.style.background = "";
+        buttonEl.style.borderColor = "";
+        buttonEl.style.color = "";
+        var hex = normalizeHex(colorHex);
+        if (!hex) return;
+        buttonEl.style.background = hex;
+        buttonEl.style.borderColor = hex;
+        buttonEl.style.color = textColorFor(hex);
+      }
+      function bindColorPair(picker, textInput, fallback) {
+        function syncFromText() {
+          var hex = normalizeHex(val(textInput));
+          if (!hex) {
+            picker.value = fallback;
+            return;
+          }
+          picker.value = hex;
+          textInput.value = hex;
+        }
+        picker.addEventListener("input", function () {
+          textInput.value = picker.value;
+          onChange();
+        });
+        textInput.addEventListener("input", function () {
+          syncFromText();
+          onChange();
+        });
+        syncFromText();
+      }
 
-      function setButtonContent(buttonEl, label, iconUrl, effect) {
+      function setButtonContent(buttonEl, label, iconUrl, effect, color) {
         buttonEl.classList.remove("btn-fire");
         if (effect === "fire") buttonEl.classList.add("btn-fire");
+        applyButtonColor(buttonEl, color);
         buttonEl.textContent = "";
         var wrap = document.createElement("span");
         wrap.className = "btn-content";
@@ -144,7 +213,8 @@
             label: val(row.querySelector(".x-label")),
             url: val(row.querySelector(".x-url")),
             icon: val(row.querySelector(".x-icon")),
-            effect: val(row.querySelector(".x-effect"))
+            effect: val(row.querySelector(".x-effect")),
+            color: val(row.querySelector(".x-color-text"))
           };
         }).filter(function (x) { return x.label || x.url || x.icon; });
       }
@@ -159,6 +229,7 @@
               '<div><label>Label #' + (i + 1) + '</label><input class="x-label" value="' + (item.label || "").replace(/"/g, "&quot;") + '" /></div>' +
               '<div><label>URL #' + (i + 1) + '</label><input class="x-url" value="' + (item.url || "").replace(/"/g, "&quot;") + '" placeholder="https://..." /></div>' +
               '<div><label>Icon #' + (i + 1) + ' (optional)</label><input class="x-icon" value="' + (item.icon || "").replace(/"/g, "&quot;") + '" placeholder="icon.png atau https://..." /></div>' +
+              '<div><label>Color #' + (i + 1) + ' (optional)</label><div class="color-field"><input class="x-color-picker color-picker" type="color" value="' + (normalizeHex(item.color || "") || "#5a4a66") + '" /><input class="x-color-text" value="' + (normalizeHex(item.color || "") || "") + '" placeholder="#RRGGBB" /></div></div>' +
               '<div><label>Effect #' + (i + 1) + '</label><select class="x-effect"><option value="">None</option><option value="fire"' + ((item.effect || "") === "fire" ? " selected" : "") + '>Api Glow</option></select></div>' +
               '<button type="button" class="btn btn-secondary x-remove">Remove</button>' +
             '</div>';
@@ -168,9 +239,17 @@
         Array.from(el.extraList.querySelectorAll(".x-remove")).forEach(function (b) {
           b.addEventListener("click", function () { b.closest(".x-row").remove(); onChange(); });
         });
-        Array.from(el.extraList.querySelectorAll(".x-label,.x-url,.x-icon,.x-effect")).forEach(function (n) {
+        Array.from(el.extraList.querySelectorAll(".x-label,.x-url,.x-icon,.x-effect,.x-color-text,.x-color-picker")).forEach(function (n) {
           n.addEventListener("input", onChange);
           n.addEventListener("change", onChange);
+        });
+        Array.from(el.extraList.querySelectorAll(".x-color-picker")).forEach(function (picker) {
+          picker.addEventListener("input", function () {
+            var row = picker.closest(".x-row");
+            if (!row) return;
+            var t = row.querySelector(".x-color-text");
+            if (t) t.value = picker.value;
+          });
         });
       }
 
@@ -182,10 +261,12 @@
           primaryUrl: val(el.pUrl),
           primaryIcon: val(el.pIcon),
           primaryEffect: val(el.pEffect),
+          primaryColor: val(el.pColor),
           secondaryLabel: val(el.sLabel),
           secondaryUrl: val(el.sUrl),
           secondaryIcon: val(el.sIcon),
           secondaryEffect: val(el.sEffect),
+          secondaryColor: val(el.sColor),
           extraButtons: collectExtras()
         };
       }
@@ -198,26 +279,29 @@
         if (!validUrl(p.secondaryUrl)) { el.err.textContent = "Secondary URL kena https://"; return false; }
         if (!validIcon(p.primaryIcon)) { el.err.textContent = "Primary icon tak valid"; return false; }
         if (!validIcon(p.secondaryIcon)) { el.err.textContent = "Secondary icon tak valid"; return false; }
+        if (p.primaryColor && !validHexColor(p.primaryColor)) { el.err.textContent = "Primary color tak valid (guna #RRGGBB)"; return false; }
+        if (p.secondaryColor && !validHexColor(p.secondaryColor)) { el.err.textContent = "Secondary color tak valid (guna #RRGGBB)"; return false; }
         for (var i = 0; i < p.extraButtons.length; i += 1) {
           var x = p.extraButtons[i];
           if (!x.label || !x.url) { el.err.textContent = "Extra #" + (i + 1) + " perlukan label + URL"; return false; }
           if (!validUrl(x.url)) { el.err.textContent = "Extra URL #" + (i + 1) + " kena https://"; return false; }
           if (!validIcon(x.icon)) { el.err.textContent = "Extra icon #" + (i + 1) + " tak valid"; return false; }
+          if (x.color && !validHexColor(x.color)) { el.err.textContent = "Extra color #" + (i + 1) + " tak valid (#RRGGBB)"; return false; }
         }
         return true;
       }
 
       function preview() {
-        setButtonContent(el.pv1, val(el.pLabel) || "Primary", val(el.pIcon), val(el.pEffect));
+        setButtonContent(el.pv1, val(el.pLabel) || "Primary", val(el.pIcon), val(el.pEffect), val(el.pColor));
         el.pv1.href = validUrl(val(el.pUrl)) ? val(el.pUrl) : "#";
-        setButtonContent(el.pv2, val(el.sLabel) || "Secondary", val(el.sIcon), val(el.sEffect));
+        setButtonContent(el.pv2, val(el.sLabel) || "Secondary", val(el.sIcon), val(el.sEffect), val(el.sColor));
         el.pv2.href = validUrl(val(el.sUrl)) ? val(el.sUrl) : "#";
         el.pvExtra.innerHTML = "";
         collectExtras().forEach(function (x) {
           if (!x.label) return;
           var a = document.createElement("a");
           a.className = "btn btn-secondary";
-          setButtonContent(a, x.label, x.icon || "", x.effect || "");
+          setButtonContent(a, x.label, x.icon || "", x.effect || "", x.color || "");
           a.href = validUrl(x.url) ? x.url : "#";
           a.target = "_blank";
           a.rel = "noopener noreferrer";
@@ -226,13 +310,12 @@
       }
 
       function saveDraft() {
-        localStorage.setItem("reezoLandingDraft", JSON.stringify({ pin: val(el.pin), data: payload() }));
+        localStorage.setItem("reezoLandingDraft", JSON.stringify({ data: payload() }));
       }
 
       function loadDraft() {
         try {
           var d = JSON.parse(localStorage.getItem("reezoLandingDraft") || "{}");
-          if (d.pin) el.pin.value = d.pin;
           if (!d.data) return;
           var p = d.data;
           if (p.title) el.title.value = p.title;
@@ -241,10 +324,18 @@
           if (p.primaryUrl) el.pUrl.value = p.primaryUrl;
           if (p.primaryIcon) el.pIcon.value = p.primaryIcon;
           if (p.primaryEffect) el.pEffect.value = p.primaryEffect;
+          if (p.primaryColor) {
+            el.pColor.value = normalizeHex(p.primaryColor);
+            if (el.pColor.value) el.pColorPicker.value = el.pColor.value;
+          }
           if (p.secondaryLabel) el.sLabel.value = p.secondaryLabel;
           if (p.secondaryUrl) el.sUrl.value = p.secondaryUrl;
           if (p.secondaryIcon) el.sIcon.value = p.secondaryIcon;
           if (p.secondaryEffect) el.sEffect.value = p.secondaryEffect;
+          if (p.secondaryColor) {
+            el.sColor.value = normalizeHex(p.secondaryColor);
+            if (el.sColor.value) el.sColorPicker.value = el.sColor.value;
+          }
           if (Array.isArray(p.extraButtons)) renderExtras(p.extraButtons);
         } catch (_) {}
       }
@@ -262,10 +353,18 @@
           if (p.primaryUrl) el.pUrl.value = p.primaryUrl;
           if (typeof p.primaryIcon === "string") el.pIcon.value = p.primaryIcon;
           if (typeof p.primaryEffect === "string") el.pEffect.value = p.primaryEffect;
+          if (typeof p.primaryColor === "string") {
+            el.pColor.value = normalizeHex(p.primaryColor);
+            if (el.pColor.value) el.pColorPicker.value = el.pColor.value;
+          }
           if (p.secondaryLabel) el.sLabel.value = p.secondaryLabel;
           if (p.secondaryUrl) el.sUrl.value = p.secondaryUrl;
           if (typeof p.secondaryIcon === "string") el.sIcon.value = p.secondaryIcon;
           if (typeof p.secondaryEffect === "string") el.sEffect.value = p.secondaryEffect;
+          if (typeof p.secondaryColor === "string") {
+            el.sColor.value = normalizeHex(p.secondaryColor);
+            if (el.sColor.value) el.sColorPicker.value = el.sColor.value;
+          }
           renderExtras(Array.isArray(p.extraButtons) ? p.extraButtons : []);
         } catch (_) {
           // no-op
@@ -305,24 +404,30 @@
       el.pUrl.value = defaults.primaryUrl;
       el.pIcon.value = defaults.primaryIcon || "";
       el.pEffect.value = defaults.primaryEffect || "";
+      el.pColor.value = normalizeHex(defaults.primaryColor || "");
+      if (el.pColor.value) el.pColorPicker.value = el.pColor.value;
       el.sLabel.value = defaults.secondaryLabel;
       el.sUrl.value = defaults.secondaryUrl;
       el.sIcon.value = defaults.secondaryIcon || "";
       el.sEffect.value = defaults.secondaryEffect || "";
+      el.sColor.value = normalizeHex(defaults.secondaryColor || "");
+      if (el.sColor.value) el.sColorPicker.value = el.sColor.value;
       renderExtras(Array.isArray(defaults.extraButtons) ? defaults.extraButtons : []);
 
       loadDraft();
       loadRemote().then(preview);
+      bindColorPair(el.pColorPicker, el.pColor, "#ff8c3a");
+      bindColorPair(el.sColorPicker, el.sColor, "#5a4a66");
       preview();
 
-      [el.title, el.subtitle, el.pLabel, el.pUrl, el.pIcon, el.pEffect, el.sLabel, el.sUrl, el.sIcon, el.sEffect, el.pin].forEach(function (n) {
+      [el.title, el.subtitle, el.pLabel, el.pUrl, el.pIcon, el.pEffect, el.pColor, el.sLabel, el.sUrl, el.sIcon, el.sEffect, el.sColor, el.pin].forEach(function (n) {
         n.addEventListener("input", onChange);
         n.addEventListener("change", onChange);
       });
 
       el.addExtra.addEventListener("click", function () {
         var x = collectExtras();
-        x.push({ label: "", url: "", icon: "", effect: "" });
+        x.push({ label: "", url: "", icon: "", effect: "", color: "" });
         renderExtras(x);
         onChange();
       });

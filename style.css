@@ -125,9 +125,9 @@ h1, h2, h3 { margin: 0; }
 .actions { display: grid; gap: 10px; margin-top: 12px; }
 
 label { display: block; font-size: 13px; margin-bottom: 4px; color: #e6dff1; }
-input, textarea, button, a { font: inherit; }
+input, textarea, select, button, a { font: inherit; }
 
-input, textarea {
+input, textarea, select {
   width: 100%;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 10px;
@@ -137,6 +137,21 @@ input, textarea {
 }
 
 textarea { min-height: 86px; resize: vertical; }
+
+.color-field {
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  gap: 8px;
+}
+
+.color-picker {
+  width: 54px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: transparent;
+  padding: 0;
+}
 
 .btn {
   width: 100%;

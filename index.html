@@ -40,10 +40,12 @@
         primaryUrl: "https://t.me/MMHREEZO_BOT",
         primaryIcon: "telegram.png",
         primaryEffect: "",
+        primaryColor: "",
         secondaryLabel: "Open WhatsApp Channel",
         secondaryUrl: "https://whatsapp.com/channel/YOUR_CHANNEL_ID",
         secondaryIcon: "whatsapp.png",
         secondaryEffect: "",
+        secondaryColor: "",
         extraButtons: []
       };
       var defaults = Object.assign({}, fallback, window.LANDING_DEFAULTS || {});
@@ -53,10 +55,41 @@
         if (!u) return true;
         return /^https?:\/\//i.test(u) || /^(?:\.\/|\/)?[A-Za-z0-9_.\-\/]+\.(png|jpg|jpeg|webp|svg|gif)$/i.test(u);
       }
+      function validHexColor(v) {
+        return /^#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/.test(String(v || "").trim());
+      }
+      function normalizeHex(v) {
+        var s = String(v || "").trim();
+        if (!validHexColor(s)) return "";
+        if (s.length === 4) {
+          return "#" + s[1] + s[1] + s[2] + s[2] + s[3] + s[3];
+        }
+        return s;
+      }
+      function textColorFor(bgHex) {
+        var hex = normalizeHex(bgHex).slice(1);
+        if (hex.length !== 6) return "";
+        var r = parseInt(hex.slice(0, 2), 16);
+        var g = parseInt(hex.slice(2, 4), 16);
+        var b = parseInt(hex.slice(4, 6), 16);
+        var yiq = (r * 299 + g * 587 + b * 114) / 1000;
+        return yiq >= 160 ? "#1b1020" : "#fff7ff";
+      }
+      function applyButtonColor(buttonEl, colorHex) {
+        buttonEl.style.background = "";
+        buttonEl.style.borderColor = "";
+        buttonEl.style.color = "";
+        var hex = normalizeHex(colorHex);
+        if (!hex) return;
+        buttonEl.style.background = hex;
+        buttonEl.style.borderColor = hex;
+        buttonEl.style.color = textColorFor(hex);
+      }
 
-      function setButtonContent(buttonEl, label, iconUrl, effect) {
+      function setButtonContent(buttonEl, label, iconUrl, effect, color) {
         buttonEl.classList.remove("btn-fire");
         if (effect === "fire") buttonEl.classList.add("btn-fire");
+        applyButtonColor(buttonEl, color);
         buttonEl.textContent = "";
         var wrap = document.createElement("span");
         wrap.className = "btn-content";
@@ -86,9 +119,9 @@
 
         var pBtn = document.getElementById("primaryBtn");
         var sBtn = document.getElementById("secondaryBtn");
-        setButtonContent(pBtn, c.primaryLabel || defaults.primaryLabel, c.primaryIcon || "", c.primaryEffect || "");
+        setButtonContent(pBtn, c.primaryLabel || defaults.primaryLabel, c.primaryIcon || "", c.primaryEffect || "", c.primaryColor || "");
         pBtn.href = validUrl(c.primaryUrl) ? c.primaryUrl : "#";
-        setButtonContent(sBtn, c.secondaryLabel || defaults.secondaryLabel, c.secondaryIcon || "", c.secondaryEffect || "");
+        setButtonContent(sBtn, c.secondaryLabel || defaults.secondaryLabel, c.secondaryIcon || "", c.secondaryEffect || "", c.secondaryColor || "");
         sBtn.href = validUrl(c.secondaryUrl) ? c.secondaryUrl : "#";
 
         var extra = document.getElementById("extraBtns");
@@ -100,7 +133,13 @@
           if (!label || !validUrl(url)) return;
           var a = document.createElement("a");
           a.className = "btn btn-secondary";
-          setButtonContent(a, label, icon, String((item && item.effect) || "").trim());
+          setButtonContent(
+            a,
+            label,
+            icon,
+            String((item && item.effect) || "").trim(),
+            String((item && item.color) || "").trim()
+          );
           a.href = url;
           a.target = "_blank";
           a.rel = "noopener noreferrer";
