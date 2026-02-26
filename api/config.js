@@ -1,8 +1,10 @@
 export default async function handler(req, res) {
   const method = req.method || "GET";
 
-  // Optional protection: set LANDING_OWNER_PIN in Vercel env, then owner page must send same pin.
-  const requiredPin = process.env.LANDING_OWNER_PIN || "";
+  // Protection:
+  // 1) If LANDING_OWNER_PIN is set in Vercel env, that value is used.
+  // 2) Otherwise fallback to default PIN below.
+  const requiredPin = process.env.LANDING_OWNER_PIN || "778899";
 
   // Simple in-memory fallback when KV is not configured.
   if (!globalThis.__landingConfigStore) {
